@@ -17,16 +17,8 @@ export class UsersService {
     return this.usersRepo.findOneBy(query);
   }
 
-  findMany(query: FindOptionsWhere<User>) {
-    return this.usersRepo.findBy(query);
-  }
-
   updateOne(id: number, updateData: Partial<User>) {
     return this.usersRepo.update(id, updateData);
-  }
-
-  removeOne(id: number) {
-    return this.usersRepo.delete(id);
   }
 
   async findManySearch(search: string) {
