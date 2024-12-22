@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere } from 'typeorm';
 import { User } from './entities/user.entity';
+import { ILike } from 'typeorm';
 
 @Injectable()
 export class UsersService {
@@ -26,5 +27,14 @@ export class UsersService {
 
   removeOne(id: number) {
     return this.usersRepo.delete(id);
+  }
+
+  async findManySearch(search: string) {
+    return this.usersRepo.find({
+      where: [
+        { username: ILike(`%${search}%`) },
+        { email: ILike(`%${search}%`) },
+      ],
+    });
   }
 }
