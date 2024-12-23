@@ -4,6 +4,9 @@ import {
   UseGuards,
   Body,
   Request,
+  Get,
+  Param,
+  ParseIntPipe,
   BadRequestException,
   NotFoundException,
   ForbiddenException,
@@ -60,5 +63,15 @@ export class OffersController {
     await this.wishesService.incrementRaised(wish.id, amount);
 
     return offer;
+  }
+
+  @Get()
+  async getAllOffers() {
+    return this.offersService.findAll();
+  }
+
+  @Get(':id')
+  async getOfferById(@Param('id', ParseIntPipe) id: number) {
+    return this.offersService.findOneOffer(id);
   }
 }
