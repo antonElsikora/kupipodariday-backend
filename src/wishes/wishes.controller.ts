@@ -51,7 +51,7 @@ export class WishesController {
       }
     }
 
-    if ((updateWishDto as any).raised !== undefined) {
+    if ('raised' in updateWishDto) {
       throw new BadRequestException('Поле raised нельзя изменять напрямую');
     }
 

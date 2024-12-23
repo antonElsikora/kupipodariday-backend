@@ -15,6 +15,7 @@ import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { CreateOfferDto } from './dto/create-offer.dto';
 import { OffersService } from './offers.service';
 import { WishesService } from '../wishes/wishes.service';
+import { RequestWithUserPayload } from 'src/types/request-with-user-payload';
 
 @UseGuards(JwtAuthGuard)
 @Controller('offers')
@@ -25,10 +26,13 @@ export class OffersController {
   ) {}
 
   @Post()
-  async createOffer(@Request() req, @Body() dto: CreateOfferDto) {
+  async createOffer(
+    @Request() req: RequestWithUserPayload,
+    @Body() dto: CreateOfferDto,
+  ) {
     const userId = req.user.userId;
 
-    const { amount, hidden, itemId } = dto as any;
+    const { amount, hidden, itemId } = dto;
 
     const wish = await this.wishesService.findOne({ id: itemId });
     if (!wish) {

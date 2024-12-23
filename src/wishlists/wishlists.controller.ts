@@ -18,6 +18,7 @@ import { CreateWishlistDto } from './dto/create-wishlist.dto';
 import { UpdateWishlistDto } from './dto/update-wishlist.dto';
 import { plainToInstance } from 'class-transformer';
 import { WishlistResponseDto } from './dto/wishlist-response.dto';
+import { RequestWithUserPayload } from 'src/types/request-with-user-payload';
 
 @UseGuards(JwtAuthGuard)
 @Controller('wishlistlists')
@@ -25,7 +26,10 @@ export class WishlistsController {
   constructor(private readonly wishlistsService: WishlistsService) {}
 
   @Post()
-  async createWishlist(@Request() req, @Body() dto: CreateWishlistDto) {
+  async createWishlist(
+    @Request() req: RequestWithUserPayload,
+    @Body() dto: CreateWishlistDto,
+  ) {
     const userId = req.user.userId;
     const newWishlist = await this.wishlistsService.createWishlist(userId, dto);
 
@@ -35,7 +39,7 @@ export class WishlistsController {
   }
 
   @Get()
-  async getUserWishlists(@Request() req) {
+  async getUserWishlists(@Request() req: RequestWithUserPayload) {
     const userId = req.user.userId;
     const wishlists = await this.wishlistsService.findByUser(userId);
 
@@ -45,7 +49,10 @@ export class WishlistsController {
   }
 
   @Get(':id')
-  async getWishlistById(@Param('id') id: number, @Request() req) {
+  async getWishlistById(
+    @Param('id') id: number,
+    @Request() req: RequestWithUserPayload,
+  ) {
     const wishlist = await this.wishlistsService.findOne({ id });
     if (!wishlist) {
       throw new NotFoundException('Список желаний не найден');
@@ -60,7 +67,7 @@ export class WishlistsController {
   async updateWishlist(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateWishlistDto,
-    @Request() req,
+    @Request() req: RequestWithUserPayload,
   ) {
     const wishlist = await this.wishlistsService.findOne({ id });
     if (!wishlist) {
@@ -78,7 +85,10 @@ export class WishlistsController {
   }
 
   @Delete(':id')
-  async removeWishlist(@Param('id') id: number, @Request() req) {
+  async removeWishlist(
+    @Param('id') id: number,
+    @Request() req: RequestWithUserPayload,
+  ) {
     const wishlist = await this.wishlistsService.findOne({ id });
     if (!wishlist) {
       throw new NotFoundException('Список желаний не найден');
@@ -93,7 +103,7 @@ export class WishlistsController {
   async addItemToWishlist(
     @Param('id') id: number,
     @Body('wishId') wishId: number,
-    @Request() req,
+    @Request() req: RequestWithUserPayload,
   ) {
     const wishlist = await this.wishlistsService.findOne({ id });
     if (!wishlist) {
@@ -109,7 +119,7 @@ export class WishlistsController {
   async removeItemFromWishlist(
     @Param('id') id: number,
     @Param('wishId') wishId: number,
-    @Request() req,
+    @Request() req: RequestWithUserPayload,
   ) {
     const wishlist = await this.wishlistsService.findOne({ id });
     if (!wishlist) {

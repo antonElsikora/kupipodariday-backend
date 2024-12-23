@@ -61,14 +61,21 @@ export class WishesService {
       copied: originalWish.copied + 1,
     });
 
-    const { id, createdAt, updatedAt, copied, owner, offers, ...rest } =
-      originalWish;
+    const newWishData = { ...originalWish };
+    delete newWishData.id;
+    delete newWishData.createdAt;
+    delete newWishData.updatedAt;
+    delete newWishData.copied;
+    delete newWishData.owner;
+    delete newWishData.offers;
+
     const newWish = this.wishesRepo.create({
-      ...rest,
+      ...newWishData,
       owner: { id: userId },
       raised: 0,
       copied: 0,
     });
+
     return this.wishesRepo.save(newWish);
   }
 
