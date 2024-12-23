@@ -10,6 +10,7 @@ import { User } from '../users/entities/user.entity';
 import { CreateWishlistDto } from './dto/create-wishlist.dto';
 import { UpdateWishlistDto } from './dto/update-wishlist.dto';
 import { Wish } from '../wishes/entities/wish.entity';
+import { In } from 'typeorm';
 
 @Injectable()
 export class WishlistsService {
@@ -20,10 +21,24 @@ export class WishlistsService {
 
   async createWishlist(userId: number, dto: CreateWishlistDto) {
     const wishlist = this.wishlistsRepo.create({
-      ...dto,
+      name: dto.name,
+      description: dto.description,
+      image: dto.image,
       owner: { id: userId } as User,
       items: [],
     });
+
+    if (dto.itemsId?.length) {
+      const foundWishes = await this.wishesRepo.findBy({
+        id: In(dto.itemsId),
+      });
+      if (foundWishes.length < dto.itemsId.length) {
+        throw new NotFoundException('Один из gifts (wish) не найден');
+      }
+
+      wishlist.items = foundWishes;
+    }
+
     return this.wishlistsRepo.save(wishlist);
   }
 
@@ -42,7 +57,36 @@ export class WishlistsService {
   }
 
   async updateOne(id: number, dto: UpdateWishlistDto) {
-    await this.wishlistsRepo.update(id, dto);
+    const wishlist = await this.findOne({ id });
+    if (!wishlist) {
+      throw new NotFoundException('Список желаний не найден');
+    }
+
+    if (dto.name !== undefined) {
+      wishlist.name = dto.name;
+    }
+    if (dto.image !== undefined) {
+      wishlist.image = dto.image;
+    }
+    if (dto.description !== undefined) {
+      wishlist.description = dto.description;
+    }
+
+    if (dto.itemsId !== undefined) {
+      if (dto.itemsId.length) {
+        const foundWishes = await this.wishesRepo.findBy({
+          id: In(dto.itemsId),
+        });
+        if (foundWishes.length < dto.itemsId.length) {
+          throw new NotFoundException('Некоторые подарки не найдены');
+        }
+        wishlist.items = foundWishes;
+      } else {
+        wishlist.items = [];
+      }
+    }
+
+    return this.wishlistsRepo.save(wishlist);
   }
 
   async removeOne(id: number) {

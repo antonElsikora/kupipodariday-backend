@@ -10,27 +10,38 @@ import {
   Request,
   NotFoundException,
   ForbiddenException,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { WishlistsService } from './wishlists.service';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { CreateWishlistDto } from './dto/create-wishlist.dto';
 import { UpdateWishlistDto } from './dto/update-wishlist.dto';
+import { plainToInstance } from 'class-transformer';
+import { WishlistResponseDto } from './dto/wishlist-response.dto';
 
 @UseGuards(JwtAuthGuard)
-@Controller('wishlists')
+@Controller('wishlistlists')
 export class WishlistsController {
   constructor(private readonly wishlistsService: WishlistsService) {}
 
   @Post()
   async createWishlist(@Request() req, @Body() dto: CreateWishlistDto) {
     const userId = req.user.userId;
-    return this.wishlistsService.createWishlist(userId, dto);
+    const newWishlist = await this.wishlistsService.createWishlist(userId, dto);
+
+    return plainToInstance(WishlistResponseDto, newWishlist, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Get()
   async getUserWishlists(@Request() req) {
     const userId = req.user.userId;
-    return this.wishlistsService.findByUser(userId);
+    const wishlists = await this.wishlistsService.findByUser(userId);
+
+    return plainToInstance(WishlistResponseDto, wishlists, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Get(':id')
@@ -47,7 +58,7 @@ export class WishlistsController {
 
   @Patch(':id')
   async updateWishlist(
-    @Param('id') id: number,
+    @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateWishlistDto,
     @Request() req,
   ) {
@@ -58,8 +69,12 @@ export class WishlistsController {
     if (wishlist.owner.id !== req.user.userId) {
       throw new ForbiddenException('Нельзя редактировать чужой список желаний');
     }
-    await this.wishlistsService.updateOne(id, dto);
-    return this.wishlistsService.findOne({ id });
+
+    const updatedWishlist = await this.wishlistsService.updateOne(id, dto);
+
+    return plainToInstance(WishlistResponseDto, updatedWishlist, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Delete(':id')
