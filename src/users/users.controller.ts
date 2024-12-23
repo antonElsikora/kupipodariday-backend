@@ -21,14 +21,13 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @Get('me')
   async getMyProfile(@Request() req) {
-    const userId = req.user.userId; // из JwtStrategy: { userId, username }
+    const userId = req.user.userId;
     const user = await this.usersService.findOne({ id: userId });
     if (!user) {
       throw new NotFoundException('Пользователь не найден');
     }
 
-    const { password, ...rest } = user;
-    return rest;
+    return user;
   }
 
   @UseGuards(JwtAuthGuard)
@@ -47,9 +46,7 @@ export class UsersController {
 
     await this.usersService.updateOne(userId, dto);
 
-    const updatedUser = await this.usersService.findOne({ id: userId });
-    const { password, ...rest } = updatedUser;
-    return rest;
+    return this.usersService.findOne({ id: userId });
   }
 
   @UseGuards(JwtAuthGuard)
@@ -59,9 +56,7 @@ export class UsersController {
     if (!user) {
       throw new NotFoundException('Пользователь не найден');
     }
-
-    const { password, email, ...rest } = user;
-    return rest;
+    return user;
   }
 
   @UseGuards(JwtAuthGuard)
@@ -71,8 +66,6 @@ export class UsersController {
       return [];
     }
 
-    const foundUsers = await this.usersService.findManySearch(search);
-
-    return foundUsers.map(({ password, email, ...rest }) => rest);
+    return this.usersService.findManySearch(search);
   }
 }

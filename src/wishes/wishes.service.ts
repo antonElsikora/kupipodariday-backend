@@ -71,4 +71,8 @@ export class WishesService {
     });
     return this.wishesRepo.save(newWish);
   }
+
+  async incrementRaised(id: number, amount: number): Promise<void> {
+    await this.wishesRepo.increment({ id }, 'raised', amount);
+  }
 }

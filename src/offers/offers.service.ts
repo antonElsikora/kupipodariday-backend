@@ -1,30 +1,25 @@
+// offers.service.ts
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Offer } from './entities/offer.entity';
 
 @Injectable()
 export class OffersService {
   constructor(@InjectRepository(Offer) private offersRepo: Repository<Offer>) {}
 
-  create(offerData: Partial<Offer>) {
-    const offer = this.offersRepo.create(offerData);
-    return this.offersRepo.save(offer);
-  }
-
-  findOne(query: FindOptionsWhere<Offer>) {
-    return this.offersRepo.findOneBy(query);
-  }
-
-  findMany(query: FindOptionsWhere<Offer>) {
-    return this.offersRepo.findBy(query);
-  }
-
-  updateOne(id: number, updateData: Partial<Offer>) {
-    return this.offersRepo.update(id, updateData);
-  }
-
-  removeOne(id: number) {
-    return this.offersRepo.delete(id);
+  async createOffer(params: {
+    amount: number;
+    hidden: boolean;
+    userId: number;
+    itemId: number;
+  }) {
+    const newOffer = this.offersRepo.create({
+      amount: params.amount,
+      hidden: params.hidden,
+      user: { id: params.userId },
+      item: { id: params.itemId },
+    });
+    return this.offersRepo.save(newOffer);
   }
 }
