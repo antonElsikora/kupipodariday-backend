@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere } from 'typeorm';
 import { User } from './entities/user.entity';
 import { ILike } from 'typeorm';
+import { NotFoundException } from '@nestjs/common';
 
 @Injectable()
 export class UsersService {
@@ -28,5 +29,17 @@ export class UsersService {
         { email: ILike(`%${search}%`) },
       ],
     });
+  }
+
+  async findByUsername(username: string): Promise<User> {
+    const user = await this.usersRepo.findOne({
+      where: { username },
+    });
+    if (!user) {
+      throw new NotFoundException(
+        `Пользователь с именем ${username} не найден`,
+      );
+    }
+    return user;
   }
 }

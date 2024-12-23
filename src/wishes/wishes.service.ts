@@ -75,4 +75,17 @@ export class WishesService {
   async incrementRaised(id: number, amount: number): Promise<void> {
     await this.wishesRepo.increment({ id }, 'raised', amount);
   }
+
+  async findByOwner(userId: number) {
+    return this.wishesRepo.find({
+      where: { owner: { id: userId } },
+      relations: [
+        'owner',
+        'offers',
+        'offers.user',
+        'offers.user.wishlists',
+        'offers.user.wishlists.items',
+      ],
+    });
+  }
 }
