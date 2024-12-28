@@ -1,9 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere } from 'typeorm';
 import { User } from './entities/user.entity';
 import { ILike } from 'typeorm';
-import { NotFoundException } from '@nestjs/common';
 
 @Injectable()
 export class UsersService {
@@ -18,8 +21,36 @@ export class UsersService {
     return this.usersRepo.findOneBy(query);
   }
 
-  updateOne(id: number, updateData: Partial<User>) {
-    return this.usersRepo.update(id, updateData);
+  async findOneByEmailOrUsername(
+    email: string,
+    username: string,
+  ): Promise<User | undefined> {
+    return this.usersRepo.findOne({
+      where: [{ email }, { username }],
+    });
+  }
+
+  async updateOne(id: number, updateData: Partial<User>) {
+    if (updateData.email || updateData.username) {
+      const foundUser = await this.usersRepo.findOne({
+        where: [{ email: updateData.email }, { username: updateData.username }],
+      });
+
+      if (foundUser && foundUser.id !== id) {
+        if (foundUser.email === updateData.email) {
+          throw new ConflictException(
+            'Пользователь с таким email уже зарегистрирован',
+          );
+        } else {
+          throw new ConflictException(
+            'Пользователь с таким username уже зарегистрирован',
+          );
+        }
+      }
+    }
+
+    await this.usersRepo.update(id, updateData);
+    return this.findOne({ id });
   }
 
   async findManySearch(search: string) {

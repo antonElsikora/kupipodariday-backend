@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, ConflictException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -18,13 +18,20 @@ export class AuthService {
     about?: string;
     avatar?: string;
   }) {
-    const existingUser = await this.usersService.findOne({
-      email: userData.email,
-    });
+    const existingUser = await this.usersService.findOneByEmailOrUsername(
+      userData.email,
+      userData.username,
+    );
     if (existingUser) {
-      throw new UnauthorizedException(
-        'Пользователь с таким email уже существует',
-      );
+      if (existingUser.email === userData.email) {
+        throw new ConflictException(
+          'Пользователь с таким email уже существует',
+        );
+      } else {
+        throw new ConflictException(
+          'Пользователь с таким username уже существует',
+        );
+      }
     }
 
     const saltRounds = 10;
