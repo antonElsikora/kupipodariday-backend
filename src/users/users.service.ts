@@ -12,7 +12,23 @@ import { ILike } from 'typeorm';
 export class UsersService {
   constructor(@InjectRepository(User) private usersRepo: Repository<User>) {}
 
-  create(userData: Partial<User>) {
+  async create(userData: Partial<User>): Promise<User> {
+    const existingUser = await this.findOneByEmailOrUsername(
+      userData.email,
+      userData.username,
+    );
+    if (existingUser) {
+      if (existingUser.email === userData.email) {
+        throw new ConflictException(
+          'Пользователь с таким email уже зарегистрирован',
+        );
+      } else {
+        throw new ConflictException(
+          'Пользователь с таким username уже зарегистрирован',
+        );
+      }
+    }
+
     const user = this.usersRepo.create(userData);
     return this.usersRepo.save(user);
   }
