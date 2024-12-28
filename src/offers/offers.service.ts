@@ -1,12 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { Offer } from './entities/offer.entity';
 import { NotFoundException } from '@nestjs/common';
 
 @Injectable()
 export class OffersService {
-  constructor(@InjectRepository(Offer) private offersRepo: Repository<Offer>) {}
+  constructor(
+    @InjectRepository(Offer) private offersRepo: Repository<Offer>,
+    private dataSource: DataSource,
+  ) {}
 
   async createOffer(params: {
     amount: number;
@@ -14,13 +17,25 @@ export class OffersService {
     userId: number;
     itemId: number;
   }) {
-    const newOffer = this.offersRepo.create({
-      amount: params.amount,
-      hidden: params.hidden,
-      user: { id: params.userId },
-      item: { id: params.itemId },
+    return await this.dataSource.transaction(async (manager) => {
+      const newOffer = this.offersRepo.create({
+        amount: params.amount,
+        hidden: params.hidden,
+        user: { id: params.userId },
+        item: { id: params.itemId },
+      });
+
+      const savedOffer = await manager.save(newOffer);
+
+      await manager.increment(
+        'wish',
+        { id: params.itemId },
+        'raised',
+        params.amount,
+      );
+
+      return savedOffer;
     });
-    return this.offersRepo.save(newOffer);
   }
 
   async findAll() {

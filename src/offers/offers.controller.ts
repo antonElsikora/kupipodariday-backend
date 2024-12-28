@@ -57,16 +57,12 @@ export class OffersController {
       );
     }
 
-    const offer = await this.offersService.createOffer({
+    return this.offersService.createOffer({
       amount,
       hidden: hidden ?? false,
       userId,
       itemId,
     });
-
-    await this.wishesService.incrementRaised(wish.id, amount);
-
-    return offer;
   }
 
   @Get()
