@@ -14,7 +14,6 @@ import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserResponseDto } from './dto/user-response.dto';
-import * as bcrypt from 'bcrypt';
 import { WishesService } from '../wishes/wishes.service';
 import { plainToInstance } from 'class-transformer';
 import { WishResponseDto } from '../wishes/dto/wish-response.dto';
@@ -30,31 +29,15 @@ export class UsersController {
   @Get('me')
   async getMyProfile(@Request() req) {
     const userId = req.user.userId;
-    const user = await this.usersService.findOne({ id: userId });
-    if (!user) {
-      throw new NotFoundException('Пользователь не найден');
-    }
-
-    return user;
+    return this.usersService.getMyProfile(userId);
   }
 
+  @UseGuards(JwtAuthGuard)
   @UseGuards(JwtAuthGuard)
   @Patch('me')
   async updateMyProfile(@Request() req, @Body() dto: UpdateUserDto) {
     const userId = req.user.userId;
-    const user = await this.usersService.findOne({ id: userId });
-    if (!user) {
-      throw new NotFoundException('Пользователь не найден');
-    }
-
-    if (dto.password) {
-      const saltRounds = 10;
-      dto.password = await bcrypt.hash(dto.password, saltRounds);
-    }
-
-    await this.usersService.updateOne(userId, dto);
-
-    return this.usersService.findOne({ id: userId });
+    return this.usersService.updateMyProfile(userId, dto);
   }
 
   @UseGuards(JwtAuthGuard)

@@ -7,9 +7,6 @@ import {
   Get,
   Param,
   ParseIntPipe,
-  BadRequestException,
-  NotFoundException,
-  ForbiddenException,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { CreateOfferDto } from './dto/create-offer.dto';
@@ -31,38 +28,7 @@ export class OffersController {
     @Body() dto: CreateOfferDto,
   ) {
     const userId = req.user.userId;
-
-    const { amount, hidden, itemId } = dto;
-
-    const wish = await this.wishesService.findOne({ id: itemId });
-    if (!wish) {
-      throw new NotFoundException('Подарок не найден');
-    }
-
-    if (wish.owner.id === userId) {
-      throw new ForbiddenException(
-        'Нельзя скидываться на свой собственный подарок',
-      );
-    }
-
-    const alreadyRaised = Number(wish.raised);
-    if (alreadyRaised >= wish.price) {
-      throw new BadRequestException('На подарок уже собрана вся сумма');
-    }
-
-    const remainder = wish.price - alreadyRaised;
-    if (amount > remainder) {
-      throw new BadRequestException(
-        `Сумма не может превышать остаток ${remainder}`,
-      );
-    }
-
-    return this.offersService.createOffer({
-      amount,
-      hidden: hidden ?? false,
-      userId,
-      itemId,
-    });
+    return this.offersService.createOffer(userId, dto);
   }
 
   @Get()

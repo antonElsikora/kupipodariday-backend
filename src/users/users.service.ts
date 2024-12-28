@@ -7,6 +7,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere } from 'typeorm';
 import { User } from './entities/user.entity';
 import { ILike } from 'typeorm';
+import { UpdateUserDto } from './dto/update-user.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -31,6 +33,29 @@ export class UsersService {
 
     const user = this.usersRepo.create(userData);
     return this.usersRepo.save(user);
+  }
+
+  async getMyProfile(userId: number): Promise<User> {
+    const user = await this.findOne({ id: userId });
+    if (!user) {
+      throw new NotFoundException('Пользователь не найден');
+    }
+    return user;
+  }
+
+  async updateMyProfile(userId: number, dto: UpdateUserDto): Promise<User> {
+    const user = await this.findOne({ id: userId });
+    if (!user) {
+      throw new NotFoundException('Пользователь не найден');
+    }
+
+    if (dto.password) {
+      const saltRounds = 10;
+      dto.password = await bcrypt.hash(dto.password, saltRounds);
+    }
+
+    await this.updateOne(userId, dto);
+    return this.findOne({ id: userId });
   }
 
   findOne(query: FindOptionsWhere<User>) {

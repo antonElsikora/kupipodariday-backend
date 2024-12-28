@@ -35,29 +35,8 @@ export class WishesController {
     @Param('id') id: number,
     @Body() updateWishDto: UpdateWishDto,
   ) {
-    const wish = await this.wishesService.findOne({ id });
-    if (!wish) {
-      throw new NotFoundException('Подарок не найден');
-    }
-
-    if (wish.owner.id !== req.user.userId) {
-      throw new ForbiddenException('Нельзя редактировать чужой подарок');
-    }
-
-    if (wish.offers?.length) {
-      if (updateWishDto.price && updateWishDto.price !== wish.price) {
-        throw new BadRequestException(
-          'Нельзя менять цену, если уже есть офферы',
-        );
-      }
-    }
-
-    if ('raised' in updateWishDto) {
-      throw new BadRequestException('Поле raised нельзя изменять напрямую');
-    }
-
-    await this.wishesService.updateWish(id, updateWishDto);
-    return this.wishesService.findOne({ id });
+    const userId = req.user.userId;
+    return this.wishesService.updateWish(userId, id, updateWishDto);
   }
 
   @Delete(':id')

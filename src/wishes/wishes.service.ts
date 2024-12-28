@@ -1,4 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Wish } from './entities/wish.entity';
@@ -29,8 +34,41 @@ export class WishesService {
     return this.wishesRepo.save(wish);
   }
 
-  async updateWish(id: number, dto: UpdateWishDto) {
-    await this.wishesRepo.update(id, dto);
+  async updateWish(
+    userId: number,
+    wishId: number,
+    dto: UpdateWishDto,
+  ): Promise<Wish> {
+    const wish = await this.findOne({ id: wishId });
+    if (!wish) {
+      throw new NotFoundException('Подарок не найден');
+    }
+
+    if (wish.owner.id !== userId) {
+      throw new ForbiddenException('Нельзя редактировать чужой подарок');
+    }
+
+    if (wish.offers?.length) {
+      if (dto.price && dto.price !== wish.price) {
+        throw new BadRequestException(
+          'Нельзя менять цену, если уже есть офферы',
+        );
+      }
+    }
+
+    if ('raised' in dto) {
+      throw new BadRequestException('Поле raised нельзя изменять напрямую');
+    }
+
+    await this.updateWishData(wishId, dto);
+    return this.findOne({ id: wishId });
+  }
+
+  private async updateWishData(
+    wishId: number,
+    dto: UpdateWishDto,
+  ): Promise<void> {
+    await this.wishesRepo.update(wishId, dto);
   }
 
   async removeWish(id: number) {
@@ -88,10 +126,6 @@ export class WishesService {
     });
 
     return this.wishesRepo.save(newWish);
-  }
-
-  async incrementRaised(id: number, amount: number): Promise<void> {
-    await this.wishesRepo.increment({ id }, 'raised', amount);
   }
 
   async findByOwner(userId: number) {
