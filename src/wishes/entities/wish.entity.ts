@@ -47,4 +47,7 @@ export class Wish {
 
   @Column({ type: 'int', default: 0 })
   copied: number;
+
+  @ManyToOne(() => Wish, { nullable: true })
+  originalWish: Wish | null;
 }

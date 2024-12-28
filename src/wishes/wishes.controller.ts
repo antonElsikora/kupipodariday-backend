@@ -16,6 +16,7 @@ import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { WishesService } from './wishes.service';
 import { CreateWishDto } from './dto/create-wish.dto';
 import { UpdateWishDto } from './dto/update-wish.dto';
+import { AlreadyCopiedException } from '../exceptions/already-copied.exception';
 
 @UseGuards(JwtAuthGuard)
 @Controller('wishes')
@@ -102,6 +103,18 @@ export class WishesController {
     if (!wish) {
       throw new NotFoundException('Подарок не найден');
     }
-    return this.wishesService.copyWish(req.user.userId, wish);
+    if (wish.owner.id === req.user.userId) {
+      throw new BadRequestException(
+        'Нельзя копировать свой собственный подарок',
+      );
+    }
+    try {
+      return this.wishesService.copyWish(req.user.userId, wish);
+    } catch (error) {
+      if (error instanceof AlreadyCopiedException) {
+        throw error;
+      }
+      throw new BadRequestException('Ошибка при копировании подарка');
+    }
   }
 }

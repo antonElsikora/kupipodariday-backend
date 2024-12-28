@@ -5,6 +5,7 @@ import { Wish } from './entities/wish.entity';
 import { User } from '../users/entities/user.entity';
 import { CreateWishDto } from './dto/create-wish.dto';
 import { UpdateWishDto } from './dto/update-wish.dto';
+import { AlreadyCopiedException } from '../exceptions/already-copied.exception';
 
 @Injectable()
 export class WishesService {
@@ -57,6 +58,15 @@ export class WishesService {
   }
 
   async copyWish(userId: number, originalWish: Wish) {
+    const existingCopy = await this.wishesRepo.findOne({
+      where: { owner: { id: userId }, originalWish: { id: originalWish.id } },
+      relations: ['originalWish'],
+    });
+
+    if (existingCopy) {
+      throw new AlreadyCopiedException();
+    }
+
     await this.wishesRepo.update(originalWish.id, {
       copied: originalWish.copied + 1,
     });
@@ -74,6 +84,7 @@ export class WishesService {
       owner: { id: userId },
       raised: 0,
       copied: 0,
+      originalWish: originalWish,
     });
 
     return this.wishesRepo.save(newWish);
@@ -92,6 +103,7 @@ export class WishesService {
         'offers.user',
         'offers.user.wishlists',
         'offers.user.wishlists.items',
+        'originalWish',
       ],
     });
   }
